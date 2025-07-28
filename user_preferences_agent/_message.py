@@ -2,13 +2,19 @@ import json
 import typing
 
 import pydantic
-from openai.types.responses import ResponseInputItemParam
+from openai.types.responses.response_input_item_param import (
+    ResponseInputItemParam,
+    Message as ResponseMessage,
+)
+from openai.types.responses.easy_input_message_param import EasyInputMessageParam
+from openai.types.responses.response_output_message_param import (
+    ResponseOutputMessageParam,
+)
 
 
 class Message(pydantic.BaseModel):
     role: typing.Literal["user", "assistant"] | str
     content: str
-    created_at: int | None = None
 
     @classmethod
     def from_data(cls, data: pydantic.BaseModel | dict) -> "Message":
@@ -20,11 +26,53 @@ class Message(pydantic.BaseModel):
         return cls.model_validate(_data)
 
     @classmethod
-    def from_response_input_item_param(cls, data: ResponseInputItemParam) -> "Message":
-        return cls.from_data(data)
+    def from_response_input_item_param(
+        cls, data: ResponseInputItemParam
+    ) -> typing.Optional["Message"]:
+        if data.get("type") != "message":
+            return None
+
+        data = typing.cast(
+            typing.Union[
+                EasyInputMessageParam, ResponseMessage, ResponseOutputMessageParam
+            ],
+            data,
+        )
+
+        _content = data["content"]
+
+        if isinstance(_content, str):
+            return cls(role=data["role"], content=_content)
+
+        _content_str = ""
+        for item in _content:
+            if item["type"] == "input_text":
+                _content_str += item["text"]
+
+            elif item["type"] == "input_image":
+                _content_str += "[image]"
+
+            elif item["type"] == "input_file":
+                _content_str += "[file]"
+
+            elif item["type"] == "output_text":
+                _content_str += item["text"]
+
+            elif item["type"] == "refusal":
+                pass
+
+            else:
+                raise ValueError(f"Unsupported content type: {item['type']}")
+
+        return cls(role=data["role"], content=_content_str)
 
     @classmethod
     def from_response_input_item_params(
         cls, data: list[ResponseInputItemParam]
     ) -> list["Message"]:
-        return [cls.from_data(i) for i in data]
+        out: list[Message] = []
+        for i in data:
+            _message = cls.from_response_input_item_param(i)
+            if _message is not None:
+                out.append(_message)
+        return out
