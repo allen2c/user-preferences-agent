@@ -23,9 +23,6 @@ __version__ = pathlib.Path(__file__).parent.joinpath("VERSION").read_text().stri
 logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL = "gpt-4.1-nano"
-ResponseStyle = typing.Literal["concise", "detailed", "professional", "casual"]
-Persona = typing.Literal["neutral_assistant", "expert_tutor", "creative_partner"]
-EmojiUsageLevel = typing.Literal["none", "sparingly", "frequent"]
 
 
 class UserPreferences(pydantic.BaseModel):
