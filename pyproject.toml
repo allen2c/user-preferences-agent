@@ -1,6 +1,7 @@
 [project]
 authors = [{ name = "Allen Chou", email = "f1470891079@gmail.com" }]
 dependencies = [
+  "currency_codes",
   "google-language-support",
   "openai",
   "openai-agents",
