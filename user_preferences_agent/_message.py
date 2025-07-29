@@ -2,11 +2,11 @@ import json
 import typing
 
 import pydantic
+from openai.types.responses.easy_input_message_param import EasyInputMessageParam
+from openai.types.responses.response_input_item_param import Message as ResponseMessage
 from openai.types.responses.response_input_item_param import (
     ResponseInputItemParam,
-    Message as ResponseMessage,
 )
-from openai.types.responses.easy_input_message_param import EasyInputMessageParam
 from openai.types.responses.response_output_message_param import (
     ResponseOutputMessageParam,
 )
@@ -76,3 +76,10 @@ class Message(pydantic.BaseModel):
             if _message is not None:
                 out.append(_message)
         return out
+
+    @classmethod
+    def to_messages_instructions(cls, messages: list["Message"]) -> str:
+        out = ""
+        for message in messages:
+            out += f"{message.role}:\n{message.content}\n\n"
+        return out.strip()

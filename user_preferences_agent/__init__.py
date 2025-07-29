@@ -1,5 +1,4 @@
 # user_preferences_agent/__init__.py
-import json
 import logging
 import pathlib
 import re
@@ -13,10 +12,13 @@ import openai
 import pydantic
 from google_language_support import LanguageCodes
 from openai.types import ChatModel
-from str_or_none import str_or_none
 
 from user_preferences_agent._currency import CurrencyCode
 from user_preferences_agent._timezone import TimezoneCode
+from user_preferences_agent._usage import Usage
+
+if typing.TYPE_CHECKING:
+    from user_preferences_agent._message import Message
 
 __version__ = pathlib.Path(__file__).parent.joinpath("VERSION").read_text().strip()
 
@@ -62,14 +64,63 @@ class UserPreferences(pydantic.BaseModel):
 
 
 class UserPreferencesAgent:
-    instructions: str = textwrap.dedent(
+    agent_instructions: str = textwrap.dedent(
         """
-        """
-    )
+        ## Role Instructions
+
+        You are User Experience Analyst.
+        You would be given a chat history between a user and an customer service agent.
+        Your job is to analyze the chat history and tell me what the user's preferences language is.
+        The reference ISO 639-1 language codes are:  {{ language_codes }}
+
+        ## Examples
+
+        ### Example 1
+
+        user:
+        Hello, I'm John Doe.
+
+        assistant:
+        Hello, John Doe. How can I help you today?
+
+        user:
+        I'm looking for a new phone.
+
+        assistant:
+        Sure, I can help you with that.
+
+        analysis:
+        language: [en]  # done
+
+        ### Example 2
+
+        user:
+        I want to know the weather in Tokyo.
+
+        assistant:
+        The weather in Tokyo is sunny.
+
+        user:
+        Could you speak in Japanese?
+
+        assistant:
+        OK, I will speak in Japanese next time.
+
+        analysis:
+        language: [ja]  # done
+
+        ## Input Chat History
+
+        {{ messages_instructions }}
+
+        analysis:
+        language:
+        """  # noqa: E501
+    ).strip()
 
     async def run(
         self,
-        text: str,
+        messages: list["Message"],
         *,
         model: (
             agents.OpenAIChatCompletionsModel
@@ -82,52 +133,61 @@ class UserPreferencesAgent:
         verbose: bool = False,
         **kwargs,
     ) -> "UserPreferencesResult":
-        if str_or_none(text) is None:
-            raise ValueError("text is required")
+        from user_preferences_agent._message import Message
 
         chat_model = self._to_chat_model(model)
 
-        agent_instructions: str = (
-            jinja2.Template(self.instructions).render(text=text).strip()
+        agent_instructions_template = jinja2.Template(self.agent_instructions)
+        user_input = agent_instructions_template.render(
+            language_codes=", ".join(lang.value for lang in LanguageCodes),
+            messages_instructions=Message.to_messages_instructions(messages),
         )
 
         if verbose:
             print("\n\n--- LLM INSTRUCTIONS ---\n")
-            print(agent_instructions)
+            print(user_input)
 
         agent = agents.Agent(
             name="user-preferences-agent",
             model=chat_model,
             model_settings=agents.ModelSettings(temperature=0.0),
-            instructions=agent_instructions,
         )
         result = await agents.Runner.run(
-            agent, text, run_config=agents.RunConfig(tracing_disabled=tracing_disabled)
+            agent,
+            user_input,
+            run_config=agents.RunConfig(tracing_disabled=tracing_disabled),
         )
+        usage = Usage.model_validate(asdict(result.context_wrapper.usage))
 
         if verbose:
             print("\n\n--- LLM OUTPUT ---\n")
             print(str(result.final_output))
             print("\n--- LLM USAGE ---\n")
-            print(
-                "Usage:",
-                json.dumps(
-                    asdict(result.context_wrapper.usage),
-                    ensure_ascii=False,
-                    default=str,
-                ),
-            )
+            print("Usage:", usage.model_dump_json(indent=4))
 
         return UserPreferencesResult(
-            text=text,
+            messages=messages,
             user_preferences=self._parse_user_preferences(str(result.final_output)),
+            usage=usage,
         )
 
     def _parse_user_preferences(
         self,
         text: str,
     ) -> UserPreferences:
-        pass
+        language_match = re.search(r"\[([^\]]+)\]", text)
+        lang_str = language_match.group(1) if language_match else None
+
+        if lang_str is None:
+            language = None
+        else:
+            try:
+                language = LanguageCodes.from_might_common_name(lang_str)
+            except ValueError:
+                logger.error(f"Invalid language expression: {lang_str}")
+                language = None
+
+        return UserPreferences(language=language)
 
     def _to_chat_model(
         self,
@@ -153,5 +213,6 @@ class UserPreferencesAgent:
 
 
 class UserPreferencesResult(pydantic.BaseModel):
-    text: str
+    messages: list["Message"]
     user_preferences: UserPreferences
+    usage: Usage
