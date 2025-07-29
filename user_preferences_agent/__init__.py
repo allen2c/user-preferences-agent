@@ -125,7 +125,7 @@ class UserPreferencesAgent:
         """  # noqa: E501
     ).strip()
 
-    async def run(
+    async def analyze_language(
         self,
         messages: list["Message"],
         *,
@@ -195,6 +195,37 @@ class UserPreferencesAgent:
             user_preferences=self._parse_user_preferences(str(result.final_output)),
             usage=usage,
         )
+
+    async def run(
+        self,
+        messages: list["Message"],
+        *,
+        model: (
+            agents.OpenAIChatCompletionsModel
+            | agents.OpenAIResponsesModel
+            | ChatModel
+            | str
+            | None
+        ) = None,
+        tracing_disabled: bool = True,
+        verbose: bool = False,
+        console: rich.console.Console = console,
+        color_rotator: RichColorRotator = color_rotator,
+        width: int = 80,
+        **kwargs,
+    ) -> "UserPreferencesResult":
+        result = await self.analyze_language(
+            messages,
+            model=model,
+            tracing_disabled=tracing_disabled,
+            verbose=verbose,
+            console=console,
+            color_rotator=color_rotator,
+            width=width,
+            **kwargs,
+        )
+
+        return result
 
     def _parse_user_preferences(
         self,
