@@ -140,7 +140,7 @@ class UserPreferencesAgent:
         verbose: bool = False,
         console: rich.console.Console = console,
         color_rotator: RichColorRotator = color_rotator,
-        width: int = 120,
+        width: int = 80,
         **kwargs,
     ) -> "UserPreferencesResult":
         from user_preferences_agent._message import Message
