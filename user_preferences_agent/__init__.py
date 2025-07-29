@@ -423,7 +423,13 @@ class UserPreferencesAgent:
         self,
         text: str,
     ) -> UserPreferences:
-        rules_and_memories: list[str] = []
+        pattern = re.compile(r"^rule:\s*(.+)", re.MULTILINE | re.IGNORECASE)
+        matches = pattern.findall(text)
+
+        if len(matches) == 1 and matches[0].strip().lower() in ("none", "null"):
+            return UserPreferences(rules_and_memories=[])
+
+        rules_and_memories = [match.strip() for match in matches]
         return UserPreferences(rules_and_memories=rules_and_memories)
 
     def _to_chat_model(
