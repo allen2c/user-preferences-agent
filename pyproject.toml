@@ -6,6 +6,8 @@ dependencies = [
   "openai",
   "openai-agents",
   "pydantic (>=2)",
+  "rich",
+  "rich-color-support",
   "str-or-none",
 ]
 description = "Simple agent summarize user preferences."
@@ -36,6 +38,7 @@ pytest-asyncio = "*"
 pytest-cov = "*"
 pytest-env = "*"
 pytest-xdist = "*"
+rich = "*"
 rich-color-support = "*"
 setuptools = "*"
 twine = "*"
