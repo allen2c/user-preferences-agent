@@ -71,7 +71,9 @@ class UserPreferencesAgent:
         You are User Experience Analyst.
         You would be given a chat history between a user and an customer service agent.
         Your job is to analyze the chat history and tell me what the user's preferences language is.
-        The reference ISO 639-1 language codes are:  {{ language_codes }}
+        The user's preferences language must be only one of the reference languages.
+        The final one language expression should be in the format of [language_name](#language_code).
+        The reference ISO 639-1 language codes are:  {{ language_codes }}.
 
         ## Examples
 
@@ -90,7 +92,7 @@ class UserPreferencesAgent:
         Sure, I can help you with that.
 
         analysis:
-        language: [en]  # done
+        language: [English](#en)  # done
 
         ### Example 2
 
@@ -107,7 +109,7 @@ class UserPreferencesAgent:
         OK, I will speak in Japanese next time.
 
         analysis:
-        language: [ja]  # done
+        language: [Japanese](#ja)  # done
 
         ## Input Chat History
 
@@ -175,16 +177,31 @@ class UserPreferencesAgent:
         self,
         text: str,
     ) -> UserPreferences:
-        language_match = re.search(r"\[([^\]]+)\]", text)
-        lang_str = language_match.group(1) if language_match else None
-
-        if lang_str is None:
-            language = None
+        pattern = re.compile(
+            r"\[([^\]]+)\]\s*\(\s*#\s*([^)]+?)\s*\)", flags=re.IGNORECASE
+        )
+        for m in pattern.finditer(text):
+            lang_expr = m.group(1)
+            lang_code_str = m.group(2)
+            break
         else:
+            logger.error(f"No language expression found in the text: {text}")
+            lang_expr = None
+            lang_code_str = None
+
+        if lang_code_str is not None:
             try:
-                language = LanguageCodes.from_might_common_name(lang_str)
+                language = LanguageCodes.from_might_common_name(lang_code_str)
             except ValueError:
-                logger.error(f"Invalid language expression: {lang_str}")
+                logger.error(f"Invalid language expression: {lang_code_str}")
+                language = None
+
+        if language is None and lang_expr is not None:
+            logger.info(f"Trying to parse language expression: {lang_expr}")
+            try:
+                language = LanguageCodes.from_might_common_name(lang_expr)
+            except ValueError:
+                logger.error(f"Failed to parse language expression: {lang_expr}")
                 language = None
 
         return UserPreferences(language=language)
