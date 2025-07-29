@@ -10,8 +10,11 @@ import agents
 import jinja2
 import openai
 import pydantic
+import rich.console
+import rich.panel
 from google_language_support import LanguageCodes
 from openai.types import ChatModel
+from rich_color_support import RichColorRotator
 
 from user_preferences_agent._currency import CurrencyCode
 from user_preferences_agent._timezone import TimezoneCode
@@ -23,6 +26,8 @@ if typing.TYPE_CHECKING:
 __version__ = pathlib.Path(__file__).parent.joinpath("VERSION").read_text().strip()
 
 logger = logging.getLogger(__name__)
+console = rich.console.Console()
+color_rotator = RichColorRotator()
 
 DEFAULT_MODEL = "gpt-4.1-nano"
 
@@ -68,12 +73,12 @@ class UserPreferencesAgent:
         """
         ## Role Instructions
 
-        You are User Experience Analyst.
-        You would be given a chat history between a user and an customer service agent.
-        Your job is to analyze the chat history and tell me what the user's preferences language is.
-        The user's preferences language must be only one of the reference languages.
-        The final one language expression should be in the format of [language_name](#language_code).
-        The reference ISO 639-1 language codes are:  {{ language_codes }}.
+        You are a User Experience Analyst.
+        You will be given a chat history between a user and a customer service agent.
+        Your task is to analyze the chat history and identify the user's preferred language.
+        The user's preferred language must be one of the reference languages.
+        Output the preferred language in the format [Language Name](#language_code).
+        The reference ISO 639-1 language codes are: {{ language_codes }}.
 
         ## Examples
 
@@ -133,6 +138,9 @@ class UserPreferencesAgent:
         ) = None,
         tracing_disabled: bool = True,
         verbose: bool = False,
+        console: rich.console.Console = console,
+        color_rotator: RichColorRotator = color_rotator,
+        width: int = 120,
         **kwargs,
     ) -> "UserPreferencesResult":
         from user_preferences_agent._message import Message
@@ -146,8 +154,13 @@ class UserPreferencesAgent:
         )
 
         if verbose:
-            print("\n\n--- LLM INSTRUCTIONS ---\n")
-            print(user_input)
+            __rich_panel = rich.panel.Panel(
+                user_input,
+                title="LLM INSTRUCTIONS",
+                border_style=color_rotator.pick(),
+                width=width,
+            )
+            console.print(__rich_panel)
 
         agent = agents.Agent(
             name="user-preferences-agent",
@@ -162,10 +175,20 @@ class UserPreferencesAgent:
         usage = Usage.model_validate(asdict(result.context_wrapper.usage))
 
         if verbose:
-            print("\n\n--- LLM OUTPUT ---\n")
-            print(str(result.final_output))
-            print("\n--- LLM USAGE ---\n")
-            print("Usage:", usage.model_dump_json(indent=4))
+            __rich_panel = rich.panel.Panel(
+                str(result.final_output),
+                title="LLM OUTPUT",
+                border_style=color_rotator.pick(),
+                width=width,
+            )
+            console.print(__rich_panel)
+            __rich_panel = rich.panel.Panel(
+                usage.model_dump_json(indent=4),
+                title="LLM USAGE",
+                border_style=color_rotator.pick(),
+                width=width,
+            )
+            console.print(__rich_panel)
 
         return UserPreferencesResult(
             messages=messages,
