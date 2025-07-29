@@ -69,7 +69,7 @@ class UserPreferences(pydantic.BaseModel):
 
 
 class UserPreferencesAgent:
-    agent_instructions: str = textwrap.dedent(
+    agent_instructions_analyze_language_jinja: str = textwrap.dedent(
         """
         ## Role Instructions
 
@@ -125,6 +125,87 @@ class UserPreferencesAgent:
         """  # noqa: E501
     ).strip()
 
+    agent_instructions_rules_and_memories_jinja: str = textwrap.dedent(
+        """
+        ## Role Instructions
+
+        You are a User Experience Analyst.
+        You will be given a chat history between a user and a customer service agent.
+        Your task is to read a chat history and extract specific rules, facts, or memories stated by the user.
+
+        ## Output Format Rules
+
+        - Each extracted piece of information MUST be on a new line.
+        - Each line MUST begin with the prefix `rule: `.
+        - Extract the information as a concise statement.
+        - If you find NO rules, facts, or memories, you MUST output exactly `rule: None`.
+        - Do NOT include conversational filler, greetings, or your own explanations.
+
+        ## Examples
+
+        ### Example 1
+
+        user:
+        My name is Alex.
+
+        assistant:
+        Nice to meet you, Alex.
+
+        user:
+        And my favorite color is blue.
+
+        analysis:
+        rule: The user's name is Alex.
+        rule: The user's favorite color is blue.
+        [DONE]
+
+        ### Example 2
+
+        user:
+        Please always respond in Spanish.
+
+        assistant:
+        Entendido. Responderé en español a partir de ahora.
+
+        analysis:
+        rule: The user wants responses in Spanish.
+        [DONE]
+
+        ### Example 3
+
+        user:
+        Can you tell me the weather?
+
+        assistant:
+        Of course. Where do you live?
+
+        user:
+        I'm in London.
+
+        analysis:
+        rule: The user is in London.
+        [DONE]
+
+        ### Example 4
+
+        user:
+        Hello!
+
+        assistant:
+        Hi there! How can I help?
+
+        analysis:
+        rule: None
+        [DONE]
+
+        ## Input Chat History
+
+        {{ messages_instructions }}
+
+        analysis:
+        """  # noqa: E501
+    ).strip()
+
     async def analyze_language(
         self,
         messages: list["Message"],
@@ -147,7 +228,9 @@ class UserPreferencesAgent:
 
         chat_model = self._to_chat_model(model)
 
-        agent_instructions_template = jinja2.Template(self.agent_instructions)
+        agent_instructions_template = jinja2.Template(
+            self.agent_instructions_analyze_language_jinja
+        )
         user_input = agent_instructions_template.render(
             language_codes=", ".join(lang.value for lang in LanguageCodes),
             messages_instructions=Message.to_messages_instructions(messages),
@@ -163,7 +246,7 @@ class UserPreferencesAgent:
             console.print(__rich_panel)
 
         agent = agents.Agent(
-            name="user-preferences-agent",
+            name="user-preferences-agent-analyze-language",
             model=chat_model,
             model_settings=agents.ModelSettings(temperature=0.0),
         )
@@ -192,7 +275,83 @@ class UserPreferencesAgent:
 
         return UserPreferencesResult(
             messages=messages,
-            user_preferences=self._parse_user_preferences(str(result.final_output)),
+            user_preferences=self._parse_user_preferences_language(
+                str(result.final_output)
+            ),
+            usage=usage,
+        )
+
+    async def analyze_rules_and_memories(
+        self,
+        messages: list["Message"],
+        *,
+        model: (
+            agents.OpenAIChatCompletionsModel
+            | agents.OpenAIResponsesModel
+            | ChatModel
+            | str
+            | None
+        ) = None,
+        tracing_disabled: bool = True,
+        verbose: bool = False,
+        console: rich.console.Console = console,
+        color_rotator: RichColorRotator = color_rotator,
+        width: int = 80,
+        **kwargs,
+    ) -> "UserPreferencesResult":
+        from user_preferences_agent._message import Message
+
+        chat_model = self._to_chat_model(model)
+
+        agent_instructions_template = jinja2.Template(
+            self.agent_instructions_rules_and_memories_jinja
+        )
+        user_input = agent_instructions_template.render(
+            messages_instructions=Message.to_messages_instructions(messages),
+        )
+
+        if verbose:
+            __rich_panel = rich.panel.Panel(
+                user_input,
+                title="LLM INSTRUCTIONS",
+                border_style=color_rotator.pick(),
+                width=width,
+            )
+            console.print(__rich_panel)
+
+        agent = agents.Agent(
+            name="user-preferences-agent-rules-and-memories",
+            model=chat_model,
+            model_settings=agents.ModelSettings(temperature=0.0),
+        )
+        result = await agents.Runner.run(
+            agent,
+            user_input,
+            run_config=agents.RunConfig(tracing_disabled=tracing_disabled),
+        )
+        usage = Usage.model_validate(asdict(result.context_wrapper.usage))
+
+        if verbose:
+            __rich_panel = rich.panel.Panel(
+                str(result.final_output),
+                title="LLM OUTPUT",
+                border_style=color_rotator.pick(),
+                width=width,
+            )
+            console.print(__rich_panel)
+            __rich_panel = rich.panel.Panel(
+                usage.model_dump_json(indent=4),
+                title="LLM USAGE",
+                border_style=color_rotator.pick(),
+                width=width,
+            )
+            console.print(__rich_panel)
+
+        return UserPreferencesResult(
+            messages=messages,
+            user_preferences=self._parse_user_preferences_rules_and_memories(
+                str(result.final_output)
+            ),
             usage=usage,
         )
 
@@ -227,7 +386,7 @@ class UserPreferencesAgent:
 
         return result
 
-    def _parse_user_preferences(
+    def _parse_user_preferences_language(
         self,
         text: str,
     ) -> UserPreferences:
@@ -259,6 +418,13 @@ class UserPreferencesAgent:
                 language = None
 
         return UserPreferences(language=language)
+
+    def _parse_user_preferences_rules_and_memories(
+        self,
+        text: str,
+    ) -> UserPreferences:
+        rules_and_memories: list[str] = []
+        return UserPreferences(rules_and_memories=rules_and_memories)
 
     def _to_chat_model(
         self,
