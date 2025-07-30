@@ -1,4 +1,5 @@
 # user_preferences_agent/__init__.py
+import asyncio
 import logging
 import pathlib
 import re
@@ -66,6 +67,15 @@ class UserPreferences(pydantic.BaseModel):
         default_factory=list,
         description="A list of standing rules, facts, and memories for the AI to follow.",  # noqa: E501
     )
+
+    def merge(self, other: "UserPreferences") -> typing.Self:
+        self.language = other.language or self.language
+        self.timezone = other.timezone or self.timezone
+        self.currency = other.currency or self.currency
+        self.country = other.country or self.country
+        self.city = other.city or self.city
+        self.rules_and_memories.extend(other.rules_and_memories)
+        return self
 
 
 class UserPreferencesAgent:
@@ -373,18 +383,41 @@ class UserPreferencesAgent:
         width: int = 80,
         **kwargs,
     ) -> "UserPreferencesResult":
-        result = await self.analyze_language(
-            messages,
-            model=model,
-            tracing_disabled=tracing_disabled,
-            verbose=verbose,
-            console=console,
-            color_rotator=color_rotator,
-            width=width,
-            **kwargs,
+        results = await asyncio.gather(
+            self.analyze_language(
+                messages,
+                model=model,
+                tracing_disabled=tracing_disabled,
+                verbose=verbose,
+                console=console,
+                color_rotator=color_rotator,
+                width=width,
+                **kwargs,
+            ),
+            self.analyze_rules_and_memories(
+                messages,
+                model=model,
+                tracing_disabled=tracing_disabled,
+                verbose=verbose,
+                console=console,
+                color_rotator=color_rotator,
+                width=width,
+                **kwargs,
+            ),
         )
 
-        return result
+        # Merge the results into a single UserPreferences object
+        usage = Usage()
+        user_preferences = UserPreferences()
+        for result in results:
+            user_preferences = user_preferences.merge(result.user_preferences)
+            usage.add(result.usage)
+
+        return UserPreferencesResult(
+            messages=messages,
+            user_preferences=user_preferences,
+            usage=usage,
+        )
 
     def _parse_user_preferences_language(
         self,
