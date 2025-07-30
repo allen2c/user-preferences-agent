@@ -83,3 +83,38 @@ class Message(pydantic.BaseModel):
         for message in messages:
             out += f"{message.role}:\n{message.content}\n\n"
         return out.strip()
+
+    @classmethod
+    def from_text(cls, text: str) -> typing.List["Message"]:
+        messages = []
+        lines = text.strip().split("\n")
+
+        current_role = None
+        current_content: list[str] = []
+
+        for line in lines:
+            line = line.strip()
+
+            # Check if this line starts a new message
+            if line in ("user:", "assistant:"):
+                # Emit message if we have a previous message
+                if current_role is not None and current_content:
+                    content = "\n".join(current_content).strip()
+                    if content:
+                        messages.append(cls(role=current_role, content=content))
+
+                # Start new message
+                current_role = line[:-1]  # Remove the colon
+                current_content = []
+
+            # Add to current message content
+            elif current_role is not None:
+                current_content.append(line)
+
+        # Handle the last message
+        if current_role is not None and current_content:
+            content = "\n".join(current_content).strip()
+            if content:
+                messages.append(cls(role=current_role, content=content))
+
+        return messages
