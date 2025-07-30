@@ -77,6 +77,14 @@ class UserPreferences(pydantic.BaseModel):
         self.rules_and_memories.extend(other.rules_and_memories)
         return self
 
+    def pretty_print(self, console: rich.console.Console = console) -> None:
+        console.print(
+            rich.panel.Panel(
+                self.model_dump_json(indent=4),
+                title="User Preferences",
+            )
+        )
+
 
 class UserPreferencesAgent:
     agent_instructions_analyze_language_jinja: str = textwrap.dedent(
