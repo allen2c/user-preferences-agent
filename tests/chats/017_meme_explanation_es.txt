@@ -1,0 +1,12 @@
+
+user:
+¿Cuál es el origen del meme del "novio distraído"?
+
+assistant:
+Ese meme se originó de una fotografía de stock tomada por el fotógrafo barcelonés Antonio Guillem en 2015. La imagen muestra a un hombre que se da la vuelta para mirar a otra mujer mientras su novia lo mira con indignación.
+
+user:
+¿Y qué significa o cómo se usa?
+
+assistant:
+Se usa para representar la tentación o la preferencia por algo nuevo en detrimento de algo que ya se tiene. Por ejemplo: el novio es "Yo", la novia es "Mis responsabilidades" y la otra mujer es "Ver series hasta las 3 de la mañana". Es una metáfora de la distracción y la procrastinación.

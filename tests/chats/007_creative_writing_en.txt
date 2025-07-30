@@ -1,0 +1,6 @@
+
+user:
+Can you give me a compelling story opening? The setting is a city where shadows have their own, independent lives.
+
+assistant:
+The noon sun pinned every citizen to the cobblestones with a dark, loyal shadow. Every citizen but Elias. His shadow, a slender, long-limbed creature he’d named “Flicker,” was currently three blocks away, attempting to pickpocket a street musician. It was the third time this week, and Elias knew he’d have to have a serious talk with it.

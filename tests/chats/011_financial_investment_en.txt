@@ -1,0 +1,12 @@
+
+user:
+I'm a complete beginner in investing. Is it better to buy individual stocks or ETFs?
+
+assistant:
+For a beginner, ETFs (Exchange-Traded Funds) are generally considered a safer starting point.
+
+user:
+Why is that?
+
+assistant:
+An individual stock represents ownership in a single company, which is concentrated risk. An ETF, on the other hand, holds a basket of many stocks (like the S&P 500), so your investment is automatically diversified. This diversification significantly reduces the risk of one company's poor performance wiping out your investment.

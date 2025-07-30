@@ -1,0 +1,12 @@
+
+user:
+Hola, ¿cómo puedo decir "it's raining cats and dogs" en español?
+
+assistant:
+Hola. Una expresión muy común y equivalente es "está lloviendo a cántaros".
+
+user:
+¿"A cántaros"? ¿Qué significa literally?
+
+assistant:
+Un "cántaro" es una vasija grande de barro para llevar agua. Así que la expresión significa que llueve tanto como si alguien estuviera vaciando grandes jarras de agua desde el cielo. Es una forma muy gráfica de describir un aguacero.

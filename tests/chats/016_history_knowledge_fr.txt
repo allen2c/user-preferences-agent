@@ -1,0 +1,12 @@
+
+user:
+Pouvez-vous m'expliquer ce qu'est la Renaissance en termes simples ?
+
+assistant:
+Bien sûr. La Renaissance est un mouvement artistique et culturel qui a commencé en Italie au 14ème siècle et s'est ensuite répandu dans toute l'Europe. C'est une période de "renaissance" de l'intérêt pour l'art, la philosophie et la science de l'Antiquité grecque et romaine.
+
+user:
+Qu'est-ce qui a changé par rapport au Moyen Âge ?
+
+assistant:
+La grande différence est le passage d'une vision du monde centrée sur Dieu (théocentrisme) à une vision centrée sur l'homme (humanisme). Des artistes comme Léonard de Vinci et Michel-Ange ont commencé à célébrer le potentiel humain et la beauté du monde naturel.

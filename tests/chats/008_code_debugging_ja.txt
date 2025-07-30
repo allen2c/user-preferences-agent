@@ -1,0 +1,12 @@
+
+user:
+すみません、このPythonのコードが動きません。どこが間違っているのでしょうか？ `numbers = "1, 2, 3"`, `total = sum(numbers)`
+
+assistant:
+`sum()` 関数は数値のリストを受け取りますが、現在の `numbers` は単一の文字列（string）です。そのため、`TypeError` が発生します。
+
+user:
+なるほど。では、どうすれば修正できますか？
+
+assistant:
+まず文字列をカンマで分割し、それぞれの要素を整数に変換する必要があります。このように修正できます： `numbers_str = "1, 2, 3"`, `numbers_list = [int(n) for n in numbers_str.split(',')]`, `total = sum(numbers_list)`

@@ -1,0 +1,12 @@
+
+user:
+¡Qué día tan bonito hace hoy! Por fin ha salido el sol.
+
+assistant:
+¡Verdad que sí! Un día así le sube el ánimo a cualquiera. ¿Tienes algún plan para aprovecharlo?
+
+user:
+Pues, no lo había pensado. Quizás vaya a dar un paseo por el parque más tarde.
+
+assistant:
+Suena genial. Disfruta mucho del paseo y del sol. ¡Que tengas una buena tarde!

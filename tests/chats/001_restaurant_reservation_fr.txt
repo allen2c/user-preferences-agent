@@ -1,0 +1,11 @@
+user:
+Bonjour, je voudrais faire une réservation pour deux personnes pour ce soir, à 19h s'il vous plaît.
+
+assistant:
+Bien sûr. À quel nom s'il vous plaît ?
+
+user:
+Au nom de Martin.
+
+assistant:
+Parfait, Monsieur Martin. Votre table pour deux personnes à 19h est confirmée. Nous nous réjouissons de vous accueillir ce soir.

@@ -1,0 +1,12 @@
+
+user:
+I have a job interview tomorrow for a marketing position. Any last-minute advice?
+
+assistant:
+At this stage, focus on preparing for common behavioral questions. Use the STAR method (Situation, Task, Action, Result) to structure your answers about past experiences.
+
+user:
+What's a tough question I should prepare for?
+
+assistant:
+Be ready for "Tell me about a time you failed." They aren't looking for perfect people. They want to see if you are self-aware, can learn from your mistakes, and show resilience. Choose a real but not catastrophic failure, and focus on what you learned from it. Good luck!

@@ -1,0 +1,12 @@
+
+user:
+Ich möchte mir einen E-Reader kaufen. Ist der Kindle oder der Tolino besser?
+
+assistant:
+Das hängt stark von Ihrem Leseverhalten und dem bevorzugten Ökosystem ab. Wenn Sie hauptsächlich bei Amazon einkaufen, ist der Kindle aufgrund der nahtlosen Integration die logische Wahl.
+
+user:
+Und wenn ich flexibler sein möchte?
+
+assistant:
+Dann ist der Tolino die bessere Option. Tolino wird von einem Bündnis großer deutscher Buchhändler unterstützt und ist offener für verschiedene Formate wie EPUB. Außerdem können Sie damit direkt Bücher aus öffentlichen Bibliotheken leihen, was mit dem Kindle in Deutschland komplizierter ist.

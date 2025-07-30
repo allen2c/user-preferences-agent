@@ -1,0 +1,6 @@
+
+user:
+Hallo, ich plane nächsten Monat eine fünftägige Reise nach Berlin. Können Sie mir helfen, eine Reiseroute zu erstellen?
+
+assistant:
+Selbstverständlich. Für einen ersten Besuch in Berlin empfehle ich diese Route: Tag 1: Ankunft, Check-in im Hotel und ein Spaziergang zum Brandenburger Tor und Reichstagsgebäude. Tag 2: Museumsinsel besuchen. Tag 3: East Side Gallery und die Gedenkstätte Berliner Mauer. Tag 4: Ein Ausflug nach Potsdam zum Schloss Sanssouci. Tag 5: Abreise.

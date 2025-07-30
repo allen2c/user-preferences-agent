@@ -1,0 +1,12 @@
+
+user:
+Hi, my laptop's fan is suddenly making a loud whirring noise and the chassis feels very hot. What should I do?
+
+assistant:
+I recommend checking if the ventilation ports are blocked by dust. You should also open the Task Manager to see if a specific application is causing a CPU spike.
+
+user:
+Okay, I see a process called `analytics.exe` that's using 90% of my CPU.
+
+assistant:
+That could be the issue. Try to end that process. If the problem persists after a restart, I suggest running a full system scan with your antivirus software, as it could be malware.
