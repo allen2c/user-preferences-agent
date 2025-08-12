@@ -6,7 +6,7 @@ dependencies = [
   "google-language-support",
   "openai",
   "openai-agents",
-  "openai-usage (>=0.3.0,<1)",
+  "openai-usage (>=0.3.1,<1)",
   "pydantic (>=2)",
   "rich",
   "rich-color-support",
