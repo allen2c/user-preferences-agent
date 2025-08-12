@@ -6,17 +6,19 @@ dependencies = [
   "google-language-support",
   "openai",
   "openai-agents",
+  "openai-usage (>=0.2.3,<1)",
   "pydantic (>=2)",
   "rich",
   "rich-color-support",
   "str-or-none",
+  "universal-message (>=0.2.2,<1)",
 ]
 description = "Simple agent summarize user preferences."
 license = { text = "MIT" }
 name = "ac-py-template"
 readme = "README.md"
 requires-python = ">=3.11,<4"
-version = "0.1.0"
+version = "0.2.0"
 
 [project.urls]
 Homepage = "https://github.com/allen2c/user-preferences-agent"
