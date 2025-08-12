@@ -6,12 +6,12 @@ dependencies = [
   "google-language-support",
   "openai",
   "openai-agents",
-  "openai-usage (>=0.2.3,<1)",
+  "openai-usage (>=0.3.0,<1)",
   "pydantic (>=2)",
   "rich",
   "rich-color-support",
   "str-or-none",
-  "universal-message (>=0.2.2,<1)",
+  "universal-message (>=0.3.0,<1)",
 ]
 description = "Simple agent summarize user preferences."
 license = { text = "MIT" }

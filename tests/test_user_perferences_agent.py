@@ -4,13 +4,13 @@ import typing
 
 import agents
 import pytest
+import universal_message as um
 
 from user_preferences_agent import UserPreferencesAgent
-from user_preferences_agent._message import Message
 
 TEST_CASES_DIR = pathlib.Path(__file__).parent.joinpath("chats")
-TEST_CASES: typing.List[typing.Tuple[str, typing.List[Message]]] = [
-    (file.name, Message.from_text(file.read_text()))
+TEST_CASES: typing.List[typing.Tuple[str, typing.List[um.Message]]] = [
+    (file.name, um.Message.from_text(file.read_text()))
     for file in TEST_CASES_DIR.glob("*.txt")
 ]
 
@@ -19,7 +19,7 @@ TEST_CASES: typing.List[typing.Tuple[str, typing.List[Message]]] = [
 @pytest.mark.parametrize("file_name, messages", TEST_CASES)
 async def test_user_preferences_agent(
     file_name: str,
-    messages: typing.List[Message],
+    messages: typing.List[um.Message],
     chat_model: agents.OpenAIChatCompletionsModel | agents.OpenAIResponsesModel,
 ):
     up_agent = UserPreferencesAgent()

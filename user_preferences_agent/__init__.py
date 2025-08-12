@@ -5,7 +5,6 @@ import pathlib
 import re
 import textwrap
 import typing
-from dataclasses import asdict
 
 import agents
 import jinja2
@@ -13,16 +12,15 @@ import openai
 import pydantic
 import rich.console
 import rich.panel
+import rich.text
+import universal_message as um
 from google_language_support import LanguageCodes
 from openai.types import ChatModel
+from openai_usage import Usage
 from rich_color_support import RichColorRotator
 
 from user_preferences_agent._currency import CurrencyCode
 from user_preferences_agent._timezone import TimezoneCode
-from user_preferences_agent._usage import Usage
-
-if typing.TYPE_CHECKING:
-    from user_preferences_agent._message import Message
 
 __version__ = pathlib.Path(__file__).parent.joinpath("VERSION").read_text().strip()
 
@@ -31,6 +29,10 @@ console = rich.console.Console()
 color_rotator = RichColorRotator()
 
 DEFAULT_MODEL = "gpt-4.1-nano"
+
+SUPPORTED_MODEL_TYPES: typing.TypeAlias = (
+    agents.OpenAIChatCompletionsModel | agents.OpenAIResponsesModel | ChatModel | str
+)
 
 
 class UserPreferences(pydantic.BaseModel):
@@ -87,7 +89,7 @@ class UserPreferences(pydantic.BaseModel):
 
 
 class UserPreferencesAgent:
-    agent_instructions_analyze_language_jinja: str = textwrap.dedent(
+    instructions_analyze_language_j2: str = textwrap.dedent(
         """
         ## Role Instructions
 
@@ -143,7 +145,7 @@ class UserPreferencesAgent:
         """  # noqa: E501
     ).strip()
 
-    agent_instructions_rules_and_memories_jinja: str = textwrap.dedent(
+    instructions_rules_and_memories_j2: str = textwrap.dedent(
         """
         ## Role Instructions
 
@@ -233,15 +235,9 @@ class UserPreferencesAgent:
 
     async def analyze_language(
         self,
-        messages: list["Message"],
+        messages: list[um.SUPPORTED_MESSAGE_TYPES] | list[um.Message],
         *,
-        model: (
-            agents.OpenAIChatCompletionsModel
-            | agents.OpenAIResponsesModel
-            | ChatModel
-            | str
-            | None
-        ) = None,
+        model: typing.Optional[SUPPORTED_MODEL_TYPES] = None,
         tracing_disabled: bool = True,
         verbose: bool = False,
         console: rich.console.Console = console,
@@ -249,21 +245,20 @@ class UserPreferencesAgent:
         width: int = 80,
         **kwargs,
     ) -> "UserPreferencesResult":
-        from user_preferences_agent._message import Message
-
+        msgs = [um.Message.from_any(msg) for msg in messages]
         chat_model = self._to_chat_model(model)
 
         agent_instructions_template = jinja2.Template(
-            self.agent_instructions_analyze_language_jinja
+            self.instructions_analyze_language_j2
         )
         user_input = agent_instructions_template.render(
             language_codes=", ".join(lang.value for lang in LanguageCodes),
-            messages_instructions=Message.to_messages_instructions(messages),
+            messages_instructions=um.messages_to_instructions(msgs),
         )
 
         if verbose:
             __rich_panel = rich.panel.Panel(
-                user_input,
+                rich.text.Text(user_input),
                 title="LLM INSTRUCTIONS",
                 border_style=color_rotator.pick(),
                 width=width,
@@ -280,18 +275,20 @@ class UserPreferencesAgent:
             user_input,
             run_config=agents.RunConfig(tracing_disabled=tracing_disabled),
         )
-        usage = Usage.model_validate(asdict(result.context_wrapper.usage))
+        usage = Usage.from_openai(result.context_wrapper.usage)
+        usage.model = chat_model.model
+        usage.cost = usage.estimate_cost(usage.model)
 
         if verbose:
             __rich_panel = rich.panel.Panel(
-                str(result.final_output),
+                rich.text.Text(str(result.final_output)),
                 title="LLM OUTPUT",
                 border_style=color_rotator.pick(),
                 width=width,
             )
             console.print(__rich_panel)
             __rich_panel = rich.panel.Panel(
-                usage.model_dump_json(indent=4),
+                rich.text.Text(usage.model_dump_json(indent=4)),
                 title="LLM USAGE",
                 border_style=color_rotator.pick(),
                 width=width,
@@ -299,24 +296,18 @@ class UserPreferencesAgent:
             console.print(__rich_panel)
 
         return UserPreferencesResult(
-            messages=messages,
+            input_messages=msgs,
             user_preferences=self._parse_user_preferences_language(
                 str(result.final_output)
             ),
-            usage=usage,
+            usages=[usage],
         )
 
     async def analyze_rules_and_memories(
         self,
-        messages: list["Message"],
+        messages: list[um.SUPPORTED_MESSAGE_TYPES] | list[um.Message],
         *,
-        model: (
-            agents.OpenAIChatCompletionsModel
-            | agents.OpenAIResponsesModel
-            | ChatModel
-            | str
-            | None
-        ) = None,
+        model: typing.Optional[SUPPORTED_MODEL_TYPES] = None,
         tracing_disabled: bool = True,
         verbose: bool = False,
         console: rich.console.Console = console,
@@ -324,20 +315,19 @@ class UserPreferencesAgent:
         width: int = 80,
         **kwargs,
     ) -> "UserPreferencesResult":
-        from user_preferences_agent._message import Message
-
+        msgs = [um.Message.from_any(msg) for msg in messages]
         chat_model = self._to_chat_model(model)
 
         agent_instructions_template = jinja2.Template(
-            self.agent_instructions_rules_and_memories_jinja
+            self.instructions_rules_and_memories_j2
         )
         user_input = agent_instructions_template.render(
-            messages_instructions=Message.to_messages_instructions(messages),
+            messages_instructions=um.messages_to_instructions(msgs),
         )
 
         if verbose:
             __rich_panel = rich.panel.Panel(
-                user_input,
+                rich.text.Text(user_input),
                 title="LLM INSTRUCTIONS",
                 border_style=color_rotator.pick(),
                 width=width,
@@ -354,18 +344,20 @@ class UserPreferencesAgent:
             user_input,
             run_config=agents.RunConfig(tracing_disabled=tracing_disabled),
         )
-        usage = Usage.model_validate(asdict(result.context_wrapper.usage))
+        usage = Usage.from_openai(result.context_wrapper.usage)
+        usage.model = chat_model.model
+        usage.cost = usage.estimate_cost(usage.model)
 
         if verbose:
             __rich_panel = rich.panel.Panel(
-                str(result.final_output),
+                rich.text.Text(str(result.final_output)),
                 title="LLM OUTPUT",
                 border_style=color_rotator.pick(),
                 width=width,
             )
             console.print(__rich_panel)
             __rich_panel = rich.panel.Panel(
-                usage.model_dump_json(indent=4),
+                rich.text.Text(usage.model_dump_json(indent=4)),
                 title="LLM USAGE",
                 border_style=color_rotator.pick(),
                 width=width,
@@ -373,24 +365,18 @@ class UserPreferencesAgent:
             console.print(__rich_panel)
 
         return UserPreferencesResult(
-            messages=messages,
+            input_messages=msgs,
             user_preferences=self._parse_user_preferences_rules_and_memories(
                 str(result.final_output)
             ),
-            usage=usage,
+            usages=[usage],
         )
 
     async def run(
         self,
-        messages: list["Message"],
+        messages: list[um.SUPPORTED_MESSAGE_TYPES] | list[um.Message],
         *,
-        model: (
-            agents.OpenAIChatCompletionsModel
-            | agents.OpenAIResponsesModel
-            | ChatModel
-            | str
-            | None
-        ) = None,
+        model: typing.Optional[SUPPORTED_MODEL_TYPES] = None,
         tracing_disabled: bool = True,
         verbose: bool = False,
         console: rich.console.Console = console,
@@ -398,10 +384,13 @@ class UserPreferencesAgent:
         width: int = 80,
         **kwargs,
     ) -> "UserPreferencesResult":
+        msgs = [um.Message.from_any(msg) for msg in messages]
+        chat_model = self._to_chat_model(model)
+
         results = await asyncio.gather(
             self.analyze_language(
-                messages,
-                model=model,
+                msgs,
+                model=chat_model,
                 tracing_disabled=tracing_disabled,
                 verbose=verbose,
                 console=console,
@@ -410,8 +399,8 @@ class UserPreferencesAgent:
                 **kwargs,
             ),
             self.analyze_rules_and_memories(
-                messages,
-                model=model,
+                msgs,
+                model=chat_model,
                 tracing_disabled=tracing_disabled,
                 verbose=verbose,
                 console=console,
@@ -422,16 +411,16 @@ class UserPreferencesAgent:
         )
 
         # Merge the results into a single UserPreferences object
-        usage = Usage()
+        usages = []
         user_preferences = UserPreferences()
         for result in results:
             user_preferences = user_preferences.merge(result.user_preferences)
-            usage.add(result.usage)
+            usages.extend(result.usages)
 
         return UserPreferencesResult(
-            messages=messages,
+            input_messages=msgs,
             user_preferences=user_preferences,
-            usage=usage,
+            usages=usages,
         )
 
     def _parse_user_preferences_language(
@@ -504,6 +493,6 @@ class UserPreferencesAgent:
 
 
 class UserPreferencesResult(pydantic.BaseModel):
-    messages: list["Message"]
+    input_messages: typing.List[um.Message]
     user_preferences: UserPreferences
-    usage: Usage
+    usages: typing.List[Usage] = pydantic.Field(default_factory=list)
