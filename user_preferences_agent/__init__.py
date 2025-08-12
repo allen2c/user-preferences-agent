@@ -151,7 +151,8 @@ class UserPreferencesAgent:
 
         You are a User Experience Analyst.
         You will be given a chat history between a user and a customer service agent.
-        Your task is to read a chat history and extract specific rules, facts, or memories stated by the user.
+        Your task is to read a chat history and extract specific rules, facts, or memories stated by the USER only.
+        Focus only on what the user says, ignore assistant responses when extracting rules.
 
         ## Abstractive Proposition Segmentation (APS)
 
@@ -167,6 +168,7 @@ class UserPreferencesAgent:
         - Each rule should contain only one atomic proposition or fact.
         - If you find NO rules, facts, or memories, you MUST output exactly `rule: None`.
         - Do NOT include conversational filler, greetings, or your own explanations.
+        - Only extract information from USER messages, not assistant responses.
 
         ## Examples
 
