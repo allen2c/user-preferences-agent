@@ -151,11 +151,18 @@ class UserPreferencesAgent:
         You will be given a chat history between a user and a customer service agent.
         Your task is to read a chat history and extract specific rules, facts, or memories stated by the user.
 
+        ## Abstractive Proposition Segmentation (APS)
+
+        Each extracted rule or memory MUST follow Abstractive Proposition Segmentation (APS) principles.
+        APS is an analysis technique that breaks down text information into component parts.
+        This means each rule should be a single, atomic proposition that captures one specific piece of information.
+
         ## Output Format Rules
 
         - Each extracted piece of information MUST be on a new line.
         - Each line MUST begin with the prefix `rule: `.
-        - Extract the information as a concise statement.
+        - Extract the information as a concise statement following APS principles.
+        - Each rule should contain only one atomic proposition or fact.
         - If you find NO rules, facts, or memories, you MUST output exactly `rule: None`.
         - Do NOT include conversational filler, greetings, or your own explanations.
 
