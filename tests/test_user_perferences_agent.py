@@ -4,6 +4,7 @@ import typing
 
 import agents
 import pytest
+import rich.console
 import universal_message as um
 
 from user_preferences_agent import UserPreferencesAgent
@@ -21,6 +22,11 @@ async def test_user_preferences_agent(
     file_name: str,
     messages: typing.List[um.Message],
     chat_model: agents.OpenAIChatCompletionsModel | agents.OpenAIResponsesModel,
+    console: rich.console.Console,
 ):
     up_agent = UserPreferencesAgent()
-    print(file_name, len(messages))
+    result = await up_agent.run(messages, model=chat_model, verbose=True)
+    assert result.user_preferences.language
+    assert result.user_preferences.rules_and_memories
+    assert len(result.usages) == 2
+    assert sum(usage.cost or 0.0 for usage in result.usages) > 0

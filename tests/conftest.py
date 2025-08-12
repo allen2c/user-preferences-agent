@@ -2,9 +2,17 @@ import agents
 import logging_bullet_train as lbt
 import openai
 import pytest
+import rich.console
 
-lbt.set_logger("ner_agent")
+lbt.set_logger("openai_usage")
 lbt.set_logger("tests")
+lbt.set_logger("universal_message")
+lbt.set_logger("user_preferences_agent")
+
+
+@pytest.fixture(scope="module")
+def console():
+    return rich.console.Console()
 
 
 @pytest.fixture(scope="module")
